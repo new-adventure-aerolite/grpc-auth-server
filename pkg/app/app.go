@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -18,6 +19,7 @@ import (
 	"github.com/TianqiuHuang/openID-login/client/pd/auth"
 	"github.com/TianqiuHuang/openID-login/client/pkg/templates"
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/hgfischer/go-otp"
 )
 
 const exampleAppState = "I wish to wash my irish wristwatch"
@@ -144,6 +146,7 @@ func (a *App) Run() error {
 
 	http.HandleFunc("/", a.handleIndex)
 	http.HandleFunc("/login", a.handleLogin)
+	http.HandleFunc("/passcode", a.handlePassCode)
 	http.HandleFunc(u.Path, a.handleCallback)
 
 	if a.tlsCert != "" && a.tlsKey != "" {
@@ -171,60 +174,24 @@ func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, authCodeURL, http.StatusSeeOther)
 }
 
-func (a *App) handleCallback(w http.ResponseWriter, r *http.Request) {
+func (a *App) handlePassCode(w http.ResponseWriter, r *http.Request) {
+	passcode := r.FormValue("passcode")
+	code, ok := store.Get(passcode)
+	if !ok {
+		http.Error(w, fmt.Sprintf("passcode not found or expired"), http.StatusNotFound)
+		return
+	}
+	defer store.Delete(passcode)
 	var (
 		err   error
 		token *oauth2.Token
 	)
-
 	ctx := oidc.ClientContext(r.Context(), a.client)
 	oauth2Config := a.oauth2Config(nil)
 
-	switch r.Method {
-	case http.MethodGet:
-		if errMsg := r.FormValue("error"); errMsg != "" {
-			http.Error(w, errMsg+": "+r.FormValue("error_description"), http.StatusBadRequest)
-			klog.Error(errMsg + ": " + r.FormValue("error_description"))
-			return
-		}
-
-		code := r.FormValue("code")
-		if code == "" {
-			http.Error(w, fmt.Sprintf("no code in request: %q", r.Form), http.StatusBadRequest)
-			klog.Errorf("no code in request: %q", r.Form)
-			return
-		}
-
-		if state := r.FormValue("state"); state != exampleAppState {
-			http.Error(w, fmt.Sprintf("expected state %q got %q", exampleAppState, state), http.StatusBadRequest)
-			klog.Errorf("expected state %q got %q", exampleAppState, state)
-			return
-		}
-
-		token, err = oauth2Config.Exchange(ctx, code)
-
-	case http.MethodPost:
-		refresh := r.FormValue("refresh_token")
-		if refresh == "" {
-			http.Error(w, fmt.Sprintf("no refresh_token in request: %q", r.Form), http.StatusBadRequest)
-			klog.Errorf("no refresh_token in request: %q", r.Form)
-			return
-		}
-		t := &oauth2.Token{
-			RefreshToken: refresh,
-			Expiry:       time.Now().Add(-time.Hour),
-		}
-		token, err = oauth2Config.TokenSource(ctx, t).Token()
-
-	default:
-		http.Error(w, fmt.Sprintf("method not implemented: %s", r.Method), http.StatusBadRequest)
-		klog.Errorf("method not implemented: %s", r.Method)
-		return
-	}
-
+	token, err = oauth2Config.Exchange(ctx, code.(string))
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to get token: %v", err), http.StatusInternalServerError)
-		klog.Errorf("failed to get token: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -235,28 +202,60 @@ func (a *App) handleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idToken, err := a.verifier.Verify(r.Context(), rawIDToken)
+	_, err = a.verifier.Verify(r.Context(), rawIDToken)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to verify ID token: %v", err), http.StatusInternalServerError)
 		klog.Errorf("failed to verify ID token: %v", err)
 		return
 	}
 
-	a.rawIDToken = rawIDToken
-
-	// Extract custom claims.
-	var claims struct {
-		Email    string   `json:"email"`
-		Verified bool     `json:"email_verified"`
-		Groups   []string `json:"groups"`
+	var wrapper struct {
+		IDToken string `json:"id_token"`
 	}
-	if err := idToken.Claims(&claims); err != nil {
-		http.Error(w, fmt.Sprintf("error decoding ID token claims: %v", err), http.StatusInternalServerError)
-		klog.Errorf("error decoding ID token claims: %v", err)
+
+	wrapper.IDToken = rawIDToken
+	b, err := json.Marshal(wrapper)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	templates.RenderLoginSuccess(w, claims.Email, rawIDToken)
+	w.Write(b)
+}
+
+func (a *App) handleCallback(w http.ResponseWriter, r *http.Request) {
+
+	if errMsg := r.FormValue("error"); errMsg != "" {
+		http.Error(w, errMsg+": "+r.FormValue("error_description"), http.StatusBadRequest)
+		klog.Error(errMsg + ": " + r.FormValue("error_description"))
+		return
+	}
+
+	code := r.FormValue("code")
+	if code == "" {
+		http.Error(w, fmt.Sprintf("no code in request: %q", r.Form), http.StatusBadRequest)
+		klog.Errorf("no code in request: %q", r.Form)
+		return
+	}
+
+	if state := r.FormValue("state"); state != exampleAppState {
+		http.Error(w, fmt.Sprintf("expected state %q got %q", exampleAppState, state), http.StatusBadRequest)
+		klog.Errorf("expected state %q got %q", exampleAppState, state)
+		return
+	}
+
+	token := otp.TOTP{
+		Secret:         code,
+		IsBase32Secret: true,
+	}
+
+	passcode := token.Get()
+	if err := store.Add(passcode, code, 5*time.Minute); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	templates.RenderLoginSuccess(w, passcode)
 }
 
 func (a *App) oauth2Config(scopes []string) *oauth2.Config {

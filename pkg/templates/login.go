@@ -31,18 +31,6 @@ var loginSuccess = template.Must(template.New("login-success.html").Parse(`<html
 		background-size: cover;
 	  }
 
-	  .token{
-        width: 600px;
-        height: 200px;
-        
-        position:absolute;
-        left:0;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        margin: auto;
-	  }
-
 	  img{
 		width: 6rem;
 		height: 6rem;
@@ -53,13 +41,9 @@ var loginSuccess = template.Must(template.New("login-success.html").Parse(`<html
 	<div>
 	<header>
 	  <img src="https://i.ibb.co/DMsjhRx/mark-success.jpg" alt="mark-success" >
-	  <p>{{ .Email }}</p>
-	  <p>login successfully, please copy the RawIDToken and close the page</p>
+	  <p>login successfully, please copy the passcode and close the page</p>
+	  <p>passcode: <pre><code>{{ .PassCode }}</code></pre></p>
 	</header>
-	</div>
-
-	<div class="token">
-	<p>RawIDToken: <pre><code>{{ .RawIDToken }}</code></pre></p>
 	</div>
 
   </body>
@@ -67,13 +51,12 @@ var loginSuccess = template.Must(template.New("login-success.html").Parse(`<html
 `))
 
 type loginSuccessData struct {
-	Email      string
-	RawIDToken string
+	PassCode string
 }
 
 // RenderLoginSuccess ...
-func RenderLoginSuccess(w http.ResponseWriter, email, rawIDToken string) {
-	renderTemplate(w, loginSuccess, loginSuccessData{Email: email, RawIDToken: rawIDToken})
+func RenderLoginSuccess(w http.ResponseWriter, passcode string) {
+	renderTemplate(w, loginSuccess, loginSuccessData{PassCode: passcode})
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl *template.Template, data interface{}) {
