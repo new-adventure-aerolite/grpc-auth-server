@@ -1,6 +1,6 @@
 .PHONY: build run docker test clean
 build:
-	go build -o main main.go
+	go build -o auth-server main.go
 
 run:
 	@go run main.go
