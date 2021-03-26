@@ -48,7 +48,15 @@ type App struct {
 
 // New ...
 func New(rootCAs, port, grpcPort, issuerURL, redirectURI, clientID, clientSecret, tlsCert, tlsKey string) (*App, error) {
-	client := http.DefaultClient
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+		Timeout: 20 * time.Second,
+	}
+
 	if rootCAs != "" {
 		tlsConfig := tls.Config{RootCAs: x509.NewCertPool()}
 		rootCABytes, err := ioutil.ReadFile(rootCAs)
