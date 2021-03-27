@@ -228,6 +228,8 @@ func (a *App) handlePassCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	w.Write(b)
 }
 
