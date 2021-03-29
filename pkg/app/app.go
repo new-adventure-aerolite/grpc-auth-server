@@ -20,6 +20,7 @@ import (
 	"github.com/TianqiuHuang/openID-login/client/pkg/templates"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/hgfischer/go-otp"
+	gtrace "github.com/moxiaomomo/grpc-jaeger"
 )
 
 const exampleAppState = "I wish to wash my irish wristwatch"
@@ -143,7 +144,17 @@ func (a *App) Run() error {
 		return fmt.Errorf("parse redirect-uri: %v", err)
 	}
 
-	grpcServer := grpc.NewServer()
+	// init tracer
+	var servOpts []grpc.ServerOption
+	tracer, _, err := gtrace.NewJaegerTracer("authServer", "127.0.0.1:6831")
+	if err != nil {
+		klog.Fatal("new tracer err: %+v\n", err)
+	}
+	if tracer != nil {
+		servOpts = append(servOpts, gtrace.ServerOption(tracer))
+	}
+
+	grpcServer := grpc.NewServer(servOpts...)
 	auth.RegisterAuthServiceServer(grpcServer, a)
 	lis, err := net.Listen("tcp", ":"+a.grpcPort)
 	if err != nil {
