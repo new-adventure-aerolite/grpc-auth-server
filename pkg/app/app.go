@@ -177,7 +177,7 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
-	scopes := []string{"openid", "profile", "email"}
+	scopes := []string{"openid", "profile", "email", "groups"}
 	authCodeURL := a.oauth2Config(scopes).AuthCodeURL(exampleAppState)
 	http.Redirect(w, r, authCodeURL, http.StatusSeeOther)
 }
