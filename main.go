@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/TianqiuHuang/openID-login/client/cmd"
+	"github.com/new-adventure-aerolite/grpc-auth-server/cmd"
 )
 
 func main() {

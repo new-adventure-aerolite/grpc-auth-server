@@ -1,4 +1,4 @@
-module github.com/TianqiuHuang/openID-login/client
+module github.com/new-adventure-aerolite/grpc-auth-server
 
 go 1.14
 

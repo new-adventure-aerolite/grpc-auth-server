@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/TianqiuHuang/openID-login/client/pkg/app"
+	"github.com/new-adventure-aerolite/grpc-auth-server/pkg/app"
 	"github.com/spf13/cobra"
 	"k8s.io/klog"
 )

@@ -16,11 +16,11 @@ import (
 	"google.golang.org/grpc"
 	"k8s.io/klog"
 
-	"github.com/TianqiuHuang/openID-login/client/pd/auth"
-	"github.com/TianqiuHuang/openID-login/client/pkg/jaeger_service"
-	"github.com/TianqiuHuang/openID-login/client/pkg/templates"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/hgfischer/go-otp"
+	"github.com/new-adventure-aerolite/grpc-auth-server/pd/auth"
+	"github.com/new-adventure-aerolite/grpc-auth-server/pkg/jaeger_service"
+	"github.com/new-adventure-aerolite/grpc-auth-server/pkg/templates"
 )
 
 const exampleAppState = "I wish to wash my irish wristwatch"
