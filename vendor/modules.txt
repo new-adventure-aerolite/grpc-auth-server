@@ -15,9 +15,6 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/hgfischer/go-otp
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/moxiaomomo/grpc-jaeger v0.0.0-20180617090213-05b879580c4a
-## explicit
-github.com/moxiaomomo/grpc-jaeger
 # github.com/opentracing/opentracing-go v1.2.0
 ## explicit
 github.com/opentracing/opentracing-go
@@ -26,8 +23,6 @@ github.com/opentracing/opentracing-go/log
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 ## explicit
 github.com/patrickmn/go-cache
-# github.com/pkg/errors v0.8.1
-github.com/pkg/errors
 # github.com/spf13/cobra v1.1.3
 ## explicit
 github.com/spf13/cobra
@@ -36,23 +31,19 @@ github.com/spf13/pflag
 # github.com/uber/jaeger-client-go v2.25.0+incompatible
 ## explicit
 github.com/uber/jaeger-client-go
-github.com/uber/jaeger-client-go/config
 github.com/uber/jaeger-client-go/internal/baggage
-github.com/uber/jaeger-client-go/internal/baggage/remote
 github.com/uber/jaeger-client-go/internal/reporterstats
 github.com/uber/jaeger-client-go/internal/spanlog
 github.com/uber/jaeger-client-go/internal/throttler
-github.com/uber/jaeger-client-go/internal/throttler/remote
 github.com/uber/jaeger-client-go/log
-github.com/uber/jaeger-client-go/rpcmetrics
 github.com/uber/jaeger-client-go/thrift
 github.com/uber/jaeger-client-go/thrift-gen/agent
-github.com/uber/jaeger-client-go/thrift-gen/baggage
 github.com/uber/jaeger-client-go/thrift-gen/jaeger
 github.com/uber/jaeger-client-go/thrift-gen/sampling
 github.com/uber/jaeger-client-go/thrift-gen/zipkincore
 github.com/uber/jaeger-client-go/transport
 github.com/uber/jaeger-client-go/utils
+github.com/uber/jaeger-client-go/zipkin
 # github.com/uber/jaeger-lib v2.4.0+incompatible
 ## explicit
 github.com/uber/jaeger-lib/metrics

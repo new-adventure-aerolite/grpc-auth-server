@@ -17,10 +17,10 @@ import (
 	"k8s.io/klog"
 
 	"github.com/TianqiuHuang/openID-login/client/pd/auth"
+	"github.com/TianqiuHuang/openID-login/client/pkg/jaeger_service"
 	"github.com/TianqiuHuang/openID-login/client/pkg/templates"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/hgfischer/go-otp"
-	gtrace "github.com/moxiaomomo/grpc-jaeger"
 )
 
 const exampleAppState = "I wish to wash my irish wristwatch"
@@ -146,13 +146,13 @@ func (a *App) Run() error {
 
 	// init tracer
 	var servOpts []grpc.ServerOption
-	tracer, _, err := gtrace.NewJaegerTracer("authServer", "127.0.0.1:6831")
+	// new jaeger tracer
+	tracer, _, err := jaeger_service.NewJaegerTracer("auth-server-backend", "jaeger-collector.istio-system.svc.cluster.local:14268")
 	if err != nil {
-		klog.Fatal("new tracer err: %+v\n", err)
+		klog.Fatal(err)
 	}
-	if tracer != nil {
-		servOpts = append(servOpts, gtrace.ServerOption(tracer))
-	}
+
+	servOpts = append(servOpts, jaeger_service.ServerOption(tracer))
 
 	grpcServer := grpc.NewServer(servOpts...)
 	auth.RegisterAuthServiceServer(grpcServer, a)
@@ -197,7 +197,7 @@ func (a *App) handlePassCode(w http.ResponseWriter, r *http.Request) {
 	passcode := r.FormValue("passcode")
 	code, ok := store.Get(passcode)
 	if !ok {
-		http.Error(w, fmt.Sprintf("passcode not found or expired"), http.StatusNotFound)
+		http.Error(w, "passcode not found or expired", http.StatusNotFound)
 		return
 	}
 	defer store.Delete(passcode)
