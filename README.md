@@ -1,4 +1,6 @@
-# auth-server
+# auth-server 
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Auth server is a client-app-auth-server in openID connect process, it handles login request from the user, redirects the user to identify provider and return a idToken to users.
 
